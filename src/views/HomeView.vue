@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const isLoggedIn = ref(false)
+const isLoaded = ref(false)
 
 const handleLogin = () => {
   isLoggedIn.value = true
@@ -11,6 +12,12 @@ const handleLogin = () => {
 const handleLogout = () => {
   isLoggedIn.value = false
 }
+
+onMounted(() => {
+  setTimeout(() => {
+    isLoaded.value = true
+  }, 100)
+})
 
 const btnBackgrounds = {
   personal:
@@ -31,27 +38,36 @@ const btnBackgrounds = {
   <div class="home-container">
     <div class="background-overlay"></div>
     <div class="main-content">
-      <div class="main-buttons">
+      <div class="main-buttons" :class="{ 'is-loaded': isLoaded }">
         <RouterLink
           to="/personal"
-          class="main-btn"
+          class="main-btn btn-personal"
           :style="{ backgroundImage: `url(${btnBackgrounds.personal})` }"
         >
-          <div class="btn-content">个人主页</div>
+          <div class="btn-content">
+            <span class="btn-icon">👤</span>
+            <span>个人主页</span>
+          </div>
         </RouterLink>
         <RouterLink
           to="/portfolio"
-          class="main-btn"
+          class="main-btn btn-portfolio"
           :style="{ backgroundImage: `url(${btnBackgrounds.portfolio})` }"
         >
-          <div class="btn-content">作品展示</div>
+          <div class="btn-content">
+            <span class="btn-icon">🎨</span>
+            <span>作品展示</span>
+          </div>
         </RouterLink>
         <RouterLink
           to="/detail"
-          class="main-btn"
+          class="main-btn btn-detail"
           :style="{ backgroundImage: `url(${btnBackgrounds.detail})` }"
         >
-          <div class="btn-content">详情</div>
+          <div class="btn-content">
+            <span class="btn-icon">📝</span>
+            <span>详情</span>
+          </div>
         </RouterLink>
       </div>
     </div>
@@ -127,6 +143,12 @@ const btnBackgrounds = {
   justify-content: center;
   align-items: center;
   padding: 0 2rem;
+  perspective: 1000px;
+}
+
+.main-buttons.is-loaded .main-btn {
+  opacity: 1;
+  transform: translateZ(0) rotateY(0);
 }
 
 .main-btn {
@@ -139,12 +161,29 @@ const btnBackgrounds = {
   text-decoration: none;
   font-size: 1.8rem;
   font-weight: bold;
-  transition: all 0.3s ease;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   position: relative;
   overflow: hidden;
   background-size: cover;
   background-position: center;
+  opacity: 0;
+  transform: translateZ(-100px) rotateY(-20deg);
+}
+
+.btn-personal {
+  transform-origin: left center;
+  transition-delay: 0.1s;
+}
+
+.btn-portfolio {
+  transform-origin: center;
+  transition-delay: 0.2s;
+}
+
+.btn-detail {
+  transform-origin: right center;
+  transition-delay: 0.3s;
 }
 
 .main-btn::before {
@@ -167,16 +206,26 @@ const btnBackgrounds = {
   z-index: 1;
   color: white;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  padding: 1rem;
+  padding: 1.5rem;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 15px;
   backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btn-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
   transition: all 0.3s ease;
 }
 
 .main-btn:hover {
   transform: translateY(-15px) scale(1.05);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
 .main-btn:hover .btn-content {
@@ -184,10 +233,30 @@ const btnBackgrounds = {
   transform: scale(1.1);
 }
 
+.main-btn:hover .btn-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.main-buttons:hover .main-btn:not(:hover) {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
   .main-buttons {
     flex-direction: column;
     gap: 2rem;
+    perspective: none;
   }
 
   .main-btn {
@@ -195,10 +264,19 @@ const btnBackgrounds = {
     max-width: 400px;
     height: 120px;
     font-size: 1.5rem;
+    transform: none !important;
   }
 
   .btn-content {
-    padding: 0.5rem 1rem;
+    padding: 1rem;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .btn-icon {
+    font-size: 2rem;
+    margin-bottom: 0;
   }
 }
 </style>
