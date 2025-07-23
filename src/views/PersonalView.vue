@@ -67,12 +67,65 @@
           </div>
         </div>
       </div>
+      <!-- 新增甘特图卡片 -->
+      <a-card title="任务甘特图" style="margin-top: 2rem">
+        <GanttChart :tasks="ganttTasks" min-date="2024-06-01" max-date="2024-06-30" />
+      </a-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import BackHomeButton from '../components/BackHomeButton.vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { Card as ACard } from 'ant-design-vue'
+import 'ant-design-vue/dist/reset.css'
+import GanttChart from '../components/GanttChart.vue'
+
+const ganttTasks = ref([
+  { name: '需求分析', periods: [ { start: '2024-06-01', end: '2024-06-04' } ] },
+  { name: 'UI设计', periods: [ { start: '2024-06-03', end: '2024-06-08' } ] },
+  { name: '前端开发', periods: [ { start: '2024-06-07', end: '2024-06-18' } ] },
+  { name: '后端开发', periods: [ { start: '2024-06-10', end: '2024-06-22' } ] },
+  { name: '测试验收', periods: [ { start: '2024-06-20', end: '2024-06-28' } ] }
+])
+
+let timer: any = null
+
+function randomPeriods() {
+  const base = new Date('2024-06-01')
+  const maxDay = 29
+  const periods = []
+  const count = Math.floor(Math.random() * 3) + 1 // 1~3段
+  for (let i = 0; i < count; i++) {
+    const startOffset = Math.floor(Math.random() * (maxDay - 1))
+    const endOffset = startOffset + Math.floor(Math.random() * 7) + 1
+    const start = new Date(base)
+    start.setDate(base.getDate() + startOffset)
+    const end = new Date(base)
+    end.setDate(base.getDate() + Math.min(endOffset, maxDay))
+    periods.push({
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10)
+    })
+  }
+  return periods
+}
+
+function updateTasks() {
+  ganttTasks.value = ganttTasks.value.map(task => ({
+    ...task,
+    periods: randomPeriods()
+  }))
+}
+
+onMounted(() => {
+  timer = setInterval(updateTasks, 2000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
 </script>
 
 <style scoped>
