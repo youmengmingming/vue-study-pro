@@ -69,7 +69,7 @@
       </div>
       <!-- 新增甘特图卡片 -->
       <a-card title="任务甘特图" style="margin-top: 2rem">
-        <GanttChart :tasks="ganttTasks" min-date="2024-06-01" max-date="2024-06-30" />
+        <GanttChart :tasks="ganttTasks" :min-date="minDate" :max-date="maxDate" />
       </a-card>
     </div>
   </div>
@@ -89,6 +89,52 @@ const ganttTasks = ref([
   { name: '后端开发', periods: [ { start: '2024-06-10', end: '2024-06-22' } ] },
   { name: '测试验收', periods: [ { start: '2024-06-20', end: '2024-06-28' } ] }
 ])
+
+const minDate = ref('2024-06-01')
+const maxDate = ref('2024-06-30')
+
+function pad(num: number) {
+  return num < 10 ? '0' + num : '' + num
+}
+
+function formatDate(date: Date) {
+  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
+}
+
+function addDays(dateStr: string, days: number) {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() + days)
+  return formatDate(d)
+}
+
+function randomPeriodInRange(start: string, end: string) {
+  const startDate = new Date(start)
+  const endDate = new Date(end)
+  const range = Math.max(1, Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) - 2)
+  const periodStartOffset = Math.floor(Math.random() * range)
+  const periodEndOffset = periodStartOffset + Math.floor(Math.random() * 7) + 1
+  const periodStart = new Date(startDate)
+  periodStart.setDate(startDate.getDate() + periodStartOffset)
+  const periodEnd = new Date(startDate)
+  periodEnd.setDate(startDate.getDate() + Math.min(periodEndOffset, range + 2))
+  return {
+    start: formatDate(periodStart),
+    end: formatDate(periodEnd)
+  }
+}
+
+function updateTasksAndAxis() {
+  // 时间轴右边界+1天
+  maxDate.value = addDays(maxDate.value, 1)
+  // 为每个任务追加一段新区间
+  ganttTasks.value = ganttTasks.value.map(task => ({
+    ...task,
+    periods: [
+      ...task.periods,
+      randomPeriodInRange(minDate.value, maxDate.value)
+    ]
+  }))
+}
 
 let timer: any = null
 
@@ -120,7 +166,7 @@ function updateTasks() {
 }
 
 onMounted(() => {
-  timer = setInterval(updateTasks, 2000)
+  timer = setInterval(updateTasksAndAxis, 2000)
 })
 
 onUnmounted(() => {
