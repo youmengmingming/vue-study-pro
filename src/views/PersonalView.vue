@@ -83,56 +83,120 @@ import 'ant-design-vue/dist/reset.css'
 import GanttChart from '../components/GanttChart.vue'
 
 const ganttTasks = ref([
-  { name: '需求分析', periods: [ { start: '2024-06-01', end: '2024-06-04' } ] },
-  { name: 'UI设计', periods: [ { start: '2024-06-03', end: '2024-06-08' } ] },
-  { name: '前端开发', periods: [ { start: '2024-06-07', end: '2024-06-18' } ] },
-  { name: '后端开发', periods: [ { start: '2024-06-10', end: '2024-06-22' } ] },
-  { name: '测试验收', periods: [ { start: '2024-06-20', end: '2024-06-28' } ] }
+  { name: '需求分析', periods: [{ start: '06-01 10:00', end: '06-01 12:00' }] },
+  { name: 'UI设计', periods: [{ start: '06-01 13:00', end: '06-01 15:00' }] },
+  { name: '前端开发', periods: [{ start: '06-01 16:00', end: '06-01 18:00' }] },
+  { name: '后端开发', periods: [{ start: '06-01 19:00', end: '06-01 21:00' }] },
+  { name: '测试验收', periods: [{ start: '06-01 22:00', end: '06-01 24:00' }] },
 ])
 
-const minDate = ref('2024-06-01')
-const maxDate = ref('2024-06-30')
-
-function pad(num: number) {
-  return num < 10 ? '0' + num : '' + num
+function getNowStr() {
+  const now = new Date()
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
+  return (
+    pad(now.getMonth() + 1) +
+    '-' +
+    pad(now.getDate()) +
+    ' ' +
+    pad(now.getHours()) +
+    ':' +
+    pad(now.getMinutes())
+  )
 }
 
-function formatDate(date: Date) {
-  return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate())
+function addMinutes(dateStr: string, minutes: number) {
+  const d = new Date()
+  // 解析 MM-dd HH:mm
+  const [md, hm] = dateStr.split(' ')
+  const [month, day] = md.split('-').map(Number)
+  const [hour, minute] = hm.split(':').map(Number)
+  d.setMonth(month - 1)
+  d.setDate(day)
+  d.setHours(hour)
+  d.setMinutes(minute + minutes)
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
+  return (
+    pad(d.getMonth() + 1) +
+    '-' +
+    pad(d.getDate()) +
+    ' ' +
+    pad(d.getHours()) +
+    ':' +
+    pad(d.getMinutes())
+  )
 }
 
-function addDays(dateStr: string, days: number) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + days)
-  return formatDate(d)
+function randomColor() {
+  // 生成亮色
+  const h = Math.floor(Math.random() * 360)
+  return `hsl(${h}, 70%, 60%)`
 }
 
-function randomPeriodInRange(start: string, end: string) {
-  const startDate = new Date(start)
-  const endDate = new Date(end)
-  const range = Math.max(1, Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) - 2)
+const periodLabels = ['阶段A', '阶段B', '阶段C', '阶段D', '阶段E', '阶段F', '阶段G', '阶段H']
+function randomLabel() {
+  return periodLabels[Math.floor(Math.random() * periodLabels.length)]
+}
+
+function randomPeriodInRangeMin(start: string, end: string) {
+  // 解析 MM-dd HH:mm
+  const now = new Date()
+  const [mdS, hmS] = start.split(' ')
+  const [monthS, dayS] = mdS.split('-').map(Number)
+  const [hourS, minuteS] = hmS.split(':').map(Number)
+  const [mdE, hmE] = end.split(' ')
+  const [monthE, dayE] = mdE.split('-').map(Number)
+  const [hourE, minuteE] = hmE.split(':').map(Number)
+  const startDate = new Date(now.getFullYear(), monthS - 1, dayS, hourS, minuteS)
+  const endDate = new Date(now.getFullYear(), monthE - 1, dayE, hourE, minuteE)
+  const range = Math.max(1, Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60)) - 2)
   const periodStartOffset = Math.floor(Math.random() * range)
-  const periodEndOffset = periodStartOffset + Math.floor(Math.random() * 7) + 1
+  const periodEndOffset = periodStartOffset + Math.floor(Math.random() * 5) + 1
   const periodStart = new Date(startDate)
-  periodStart.setDate(startDate.getDate() + periodStartOffset)
+  periodStart.setMinutes(startDate.getMinutes() + periodStartOffset)
   const periodEnd = new Date(startDate)
-  periodEnd.setDate(startDate.getDate() + Math.min(periodEndOffset, range + 2))
+  periodEnd.setMinutes(startDate.getMinutes() + Math.min(periodEndOffset, range + 2))
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n)
   return {
-    start: formatDate(periodStart),
-    end: formatDate(periodEnd)
+    start:
+      pad(periodStart.getMonth() + 1) +
+      '-' +
+      pad(periodStart.getDate()) +
+      ' ' +
+      pad(periodStart.getHours()) +
+      ':' +
+      pad(periodStart.getMinutes()),
+    end:
+      pad(periodEnd.getMonth() + 1) +
+      '-' +
+      pad(periodEnd.getDate()) +
+      ' ' +
+      pad(periodEnd.getHours()) +
+      ':' +
+      pad(periodEnd.getMinutes()),
+    color: randomColor(),
+    label: randomLabel(),
   }
 }
 
+// 初始化为当前时间
+const minDate = ref(getNowStr())
+const maxDate = ref(addMinutes(minDate.value, 30))
+
+ganttTasks.value = [
+  { name: '需求分析', periods: [randomPeriodInRangeMin(minDate.value, maxDate.value)] },
+  { name: 'UI设计', periods: [randomPeriodInRangeMin(minDate.value, maxDate.value)] },
+  { name: '前端开发', periods: [randomPeriodInRangeMin(minDate.value, maxDate.value)] },
+  { name: '后端开发', periods: [randomPeriodInRangeMin(minDate.value, maxDate.value)] },
+  { name: '测试验收', periods: [randomPeriodInRangeMin(minDate.value, maxDate.value)] },
+]
+
 function updateTasksAndAxis() {
-  // 时间轴右边界+1天
-  maxDate.value = addDays(maxDate.value, 1)
+  // 时间轴右边界+1分钟
+  maxDate.value = addMinutes(maxDate.value, 1)
   // 为每个任务追加一段新区间
-  ganttTasks.value = ganttTasks.value.map(task => ({
+  ganttTasks.value = ganttTasks.value.map((task) => ({
     ...task,
-    periods: [
-      ...task.periods,
-      randomPeriodInRange(minDate.value, maxDate.value)
-    ]
+    periods: [...task.periods, randomPeriodInRangeMin(minDate.value, maxDate.value)],
   }))
 }
 
@@ -152,16 +216,16 @@ function randomPeriods() {
     end.setDate(base.getDate() + Math.min(endOffset, maxDay))
     periods.push({
       start: start.toISOString().slice(0, 10),
-      end: end.toISOString().slice(0, 10)
+      end: end.toISOString().slice(0, 10),
     })
   }
   return periods
 }
 
 function updateTasks() {
-  ganttTasks.value = ganttTasks.value.map(task => ({
+  ganttTasks.value = ganttTasks.value.map((task) => ({
     ...task,
-    periods: randomPeriods()
+    periods: randomPeriods(),
   }))
 }
 
